@@ -5,7 +5,6 @@ import pandas as pd
 from PIL import Image
 from tensorflow.keras.applications.resnet50 import preprocess_input
 import os
-import datetime
 
 # --- 1. PAGE CONFIGURATION ---
 st.set_page_config(
@@ -15,40 +14,43 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- 2. BULLETPROOF CSS (High Visibility Mode) ---
+# --- 2. THEME ENFORCEMENT (The Fix) ---
 st.markdown("""
 <style>
-    /* 1. Main Background */
+    /* 1. Force entire app background to Light Grey */
     .stApp {
         background-color: #f4f6f9;
     }
     
-    /* 2. Text Visibility - Force Dark Grey everywhere */
-    h1, h2, h3, h4, h5, h6, p, li, label, .stMarkdown {
-        color: #1e293b !important;
+    /* 2. FORCE ALL TEXT TO BE DARK (Overrides Dark Mode) */
+    h1, h2, h3, h4, h5, h6, p, li, label, .stMarkdown, .stText {
+        color: #1e293b !important; /* Dark Slate Blue */
     }
     
-    /* 3. Input Boxes - Force White Background & Dark Text (Fixes your Grey issue) */
-    .stSelectbox, .stNumberInput, .stRadio, .stFileUploader {
+    /* 3. Fix Input Box Visibility */
+    .stSelectbox div[data-baseweb="select"] > div,
+    .stNumberInput div[data-baseweb="input"] > div,
+    .stTextInput div[data-baseweb="input"] > div {
         background-color: white !important;
-        border-radius: 8px;
+        color: black !important;
+        border: 1px solid #cbd5e1;
     }
     
     /* Force text inside inputs to be black */
-    div[data-baseweb="select"] span, div[data-baseweb="input"] input {
+    input {
         color: black !important;
     }
     
-    /* 4. Sidebar Styling */
+    /* 4. Sidebar Background */
     section[data-testid="stSidebar"] {
         background-color: #ffffff;
         border-right: 2px solid #e2e8f0;
     }
     
-    /* 5. Result Card - Medical Grade Look */
+    /* 5. Result Card */
     .diagnosis-card {
         background-color: white;
-        padding: 25px;
+        padding: 30px;
         border-radius: 12px;
         box-shadow: 0 4px 15px rgba(0,0,0,0.05);
         border: 1px solid #e2e8f0;
@@ -64,11 +66,17 @@ st.markdown("""
         font-size: 16px;
         border-radius: 8px;
         font-weight: 600;
-        box-shadow: 0 4px 6px rgba(2, 132, 199, 0.2);
+        width: 100%;
     }
     div.stButton > button:hover {
         transform: translateY(-2px);
         box-shadow: 0 6px 8px rgba(2, 132, 199, 0.3);
+    }
+    
+    /* 7. Fix Expander Text */
+    .streamlit-expanderHeader {
+        color: #1e293b !important;
+        background-color: white !important;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -117,10 +125,7 @@ with st.sidebar:
     ], help="Select the exact location where the image was taken.")
     
     st.markdown("---")
-    
-    # NEW FEATURE: Download Placeholder
-    st.caption("Session ID: " + str(hash(datetime.datetime.now()))[:8])
-    st.button("📥 Export Session Log") # This is a placeholder to look professional
+    st.info("ℹ️ **Privacy Note:** No patient data is stored locally. All processing happens in temporary memory.")
 
 # --- 6. HELPER FUNCTIONS ---
 def build_meta_vector(age, sex, loc):
@@ -139,18 +144,26 @@ def build_meta_vector(age, sex, loc):
     return np.array(sex_v + loc_v + [age / 100.0]).reshape(1, -1)
 
 # --- 7. MAIN INTERFACE ---
-col_main, col_guide = st.columns([3, 1])
-with col_main:
+col_logo, col_title = st.columns([1, 5])
+with col_title:
     st.title("DermaVision Pro")
     st.markdown("**AI-Assisted Dermatoscopy Analysis System**")
 
-# Layout: Left (Image) | Right (Diagnostics)
-col1, col2 = st.columns([1, 1.2], gap="large")
+# Beginners Guide (Collapsible)
+with st.expander("📖 New User Guide: How to use this tool", expanded=True):
+    st.markdown("""
+    1. **Enter Patient Data:** Use the sidebar on the left to set Age, Sex, and Location.
+    2. **Upload Image:** Take a clear, close-up photo of the skin lesion and upload it below.
+    3. **Analyze:** Click the 'Analyze Lesion' button.
+    4. **Review:** Check the diagnosis and confidence score.
+    """)
+
+# Main Layout
+col1, col2 = st.columns([1, 1], gap="large")
 
 with col1:
-    st.markdown("### 1. Specimen Acquisition")
-    st.info("Ensure image is clear, focused, and free of hair/bubbles.")
-    uploaded_file = st.file_uploader("Upload Image", type=["jpg", "png", "jpeg"], label_visibility="collapsed")
+    st.subheader("1. Specimen Acquisition")
+    uploaded_file = st.file_uploader("Upload Image", type=["jpg", "png", "jpeg"], label_visibility="visible")
     
     if uploaded_file:
         image = Image.open(uploaded_file)
@@ -160,7 +173,7 @@ with col1:
             st.warning("⚠️ Low Resolution Warning")
 
 with col2:
-    st.markdown("### 2. Diagnostic Engine")
+    st.subheader("2. Diagnostic Engine")
     
     if uploaded_file:
         if st.button("RUN DIAGNOSTIC ANALYSIS"):
@@ -196,8 +209,8 @@ with col2:
                 # BEAUTIFUL RESULT CARD
                 st.markdown(f"""
                 <div class="diagnosis-card" style="border-top: 6px solid {border_color}; background-color: {bg_color};">
-                    <h4 style="margin:0; color:#555;">AI Prediction</h4>
-                    <h1 style="margin:10px 0; color:#1e293b;">{icon} {full_name}</h1>
+                    <h4 style="margin:0; color:#555 !important;">AI Prediction</h4>
+                    <h1 style="margin:10px 0; color:#1e293b !important;">{icon} {full_name}</h1>
                     <div style="display:flex; justify-content:center; gap:20px; margin-top:15px;">
                         <span style="background:white; padding:5px 15px; border-radius:15px; border:1px solid {border_color}; color:{border_color}; font-weight:bold;">
                             {status}
@@ -213,18 +226,15 @@ with col2:
                 st.write("")
                 st.markdown("#### Differential Probabilities")
                 
-                # Create a nice clean table instead of a bar chart (Easier for doctors to read)
+                # Create a nice clean table
                 res_df = pd.DataFrame({
                     "Condition": [class_details[c][0] for c in classes],
                     "Risk Level": [class_details[c][1] for c in classes],
                     "Probability": [f"{p*100:.2f}%" for p in preds[0]]
                 }).sort_values(by="Probability", ascending=False)
                 
-                st.dataframe(
-                    res_df.style.background_gradient(subset=["Probability"], cmap="Blues"),
-                    use_container_width=True,
-                    hide_index=True
-                )
+                # Using standard table for maximum compatibility
+                st.table(res_df)
 
     else:
         # Empty State
@@ -237,11 +247,12 @@ with col2:
         * **Keratosis** (Benign/Pre-cancerous)
         """)
 
-# --- Footer ---
+# Footer
 st.markdown("---")
 st.markdown("""
-<div style="text-align: center; font-size: 12px; color: #64748b;">
-    <strong>Medical Disclaimer:</strong> This system uses Artificial Intelligence to estimate risk. 
-    It is NOT a diagnostic device. All results must be verified by a certified dermatologist.
+<div style="text-align: center; color: #64748b; font-size: 12px;">
+    <strong>Medical Disclaimer:</strong> This tool is for educational purposes only. 
+    AI predictions should never replace professional medical advice. 
+    Always consult a dermatologist for diagnosis.
 </div>
 """, unsafe_allow_html=True)
