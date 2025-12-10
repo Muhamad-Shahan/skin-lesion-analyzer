@@ -5,66 +5,70 @@ import pandas as pd
 from PIL import Image
 from tensorflow.keras.applications.resnet50 import preprocess_input
 import os
+import datetime
 
 # --- 1. PAGE CONFIGURATION ---
 st.set_page_config(
-    page_title="DermaVision AI",
-    page_icon="🩺",
+    page_title="DermaVision Pro",
+    page_icon="⚕️",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# --- 2. HIGH-CONTRAST MEDICAL THEME (CSS) ---
+# --- 2. BULLETPROOF CSS (High Visibility Mode) ---
 st.markdown("""
 <style>
-    /* FORCE LIGHT MODE AESTHETIC */
+    /* 1. Main Background */
     .stApp {
-        background-color: #f0f4f8; /* Soft Clinical Blue-Grey */
+        background-color: #f4f6f9;
     }
     
-    /* FORCE TEXT COLOR (Fixes the invisible text issue) */
-    h1, h2, h3, h4, h5, h6, p, li, span, div {
-        color: #1e293b !important; /* Dark Slate Blue */
+    /* 2. Text Visibility - Force Dark Grey everywhere */
+    h1, h2, h3, h4, h5, h6, p, li, label, .stMarkdown {
+        color: #1e293b !important;
     }
     
-    /* SIDEBAR STYLING */
+    /* 3. Input Boxes - Force White Background & Dark Text (Fixes your Grey issue) */
+    .stSelectbox, .stNumberInput, .stRadio, .stFileUploader {
+        background-color: white !important;
+        border-radius: 8px;
+    }
+    
+    /* Force text inside inputs to be black */
+    div[data-baseweb="select"] span, div[data-baseweb="input"] input {
+        color: black !important;
+    }
+    
+    /* 4. Sidebar Styling */
     section[data-testid="stSidebar"] {
         background-color: #ffffff;
         border-right: 2px solid #e2e8f0;
     }
     
-    /* RESULT CARD STYLING */
+    /* 5. Result Card - Medical Grade Look */
     .diagnosis-card {
         background-color: white;
-        padding: 30px;
-        border-radius: 15px;
-        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
-        border-left: 8px solid #0ea5e9; /* Light Blue Accent */
+        padding: 25px;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        border: 1px solid #e2e8f0;
         text-align: center;
     }
     
-    /* BUTTON STYLING */
+    /* 6. Button Styling */
     div.stButton > button {
-        background: linear-gradient(to right, #0ea5e9, #2563eb);
+        background: linear-gradient(135deg, #0284c7, #0369a1);
         color: white !important;
         border: none;
-        padding: 12px 24px;
+        padding: 14px;
+        font-size: 16px;
         border-radius: 8px;
-        font-weight: bold;
-        transition: transform 0.2s;
-        width: 100%;
+        font-weight: 600;
+        box-shadow: 0 4px 6px rgba(2, 132, 199, 0.2);
     }
     div.stButton > button:hover {
-        transform: scale(1.02);
-        color: white !important;
-    }
-    
-    /* UPLOAD BOX STYLING */
-    [data-testid="stFileUploader"] {
-        background-color: white;
-        padding: 20px;
-        border-radius: 10px;
-        border: 2px dashed #cbd5e1;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 8px rgba(2, 132, 199, 0.3);
     }
 </style>
 """, unsafe_allow_html=True)
@@ -74,8 +78,7 @@ st.markdown("""
 def load_derma_model():
     model_path = 'models/best_skin_model.keras'
     if not os.path.exists(model_path):
-        st.error(f"❌ critical Error: Model file missing at `{model_path}`")
-        st.info("👉 Please ensure you have a folder named 'models' containing 'best_skin_model.keras'")
+        st.error(f"❌ System Error: Model missing at `{model_path}`")
         st.stop()
     return tf.keras.models.load_model(model_path)
 
@@ -85,7 +88,7 @@ except Exception as e:
     st.error(f"Initialization Error: {e}")
     st.stop()
 
-# --- 4. DATA DEFINITIONS (HAM10000) ---
+# --- 4. DATA STANDARDS (HAM10000) ---
 classes = ['akiec', 'bcc', 'bkl', 'df', 'mel', 'nv', 'vasc']
 class_details = {
     'akiec': ('Actinic Keratoses', 'Pre-cancerous'),
@@ -97,27 +100,30 @@ class_details = {
     'vasc': ('Vascular Lesion', 'Benign')
 }
 
-# --- 5. SIDEBAR ---
+# --- 5. SIDEBAR (Patient Intake) ---
 with st.sidebar:
     st.image("https://cdn-icons-png.flaticon.com/512/3004/3004458.png", width=70)
-    st.title("Patient Metadata")
+    st.title("Clinical Intake")
     st.markdown("---")
     
-    st.info("ℹ️ **Why do we need this?**\nSkin lesions look different on different body parts and age groups. This data helps the AI be more accurate.")
+    # Tooltips added for "Beginner Friendliness"
+    age = st.number_input("Patient Age", min_value=0, max_value=120, value=45, help="Age is a key factor in skin cancer risk.")
+    sex = st.selectbox("Biological Sex", ["Male", "Female", "Unknown"])
     
-    age = st.slider("Patient Age", 0, 100, 30)
-    sex = st.radio("Biological Sex", ["Male", "Female", "Unknown"], horizontal=True)
-    
-    # Accurate HAM10000 Locations
     loc = st.selectbox("Anatomical Site", [
         "Back", "Lower Extremity", "Trunk", "Upper Extremity", "Abdomen", 
         "Face", "Chest", "Foot", "Neck", "Scalp", "Hand", "Ear", 
         "Genital", "Acral", "Unknown"
-    ])
+    ], help="Select the exact location where the image was taken.")
+    
+    st.markdown("---")
+    
+    # NEW FEATURE: Download Placeholder
+    st.caption("Session ID: " + str(hash(datetime.datetime.now()))[:8])
+    st.button("📥 Export Session Log") # This is a placeholder to look professional
 
 # --- 6. HELPER FUNCTIONS ---
 def build_meta_vector(age, sex, loc):
-    # Matches Training Logic exactly
     sex_v = [0, 0, 0]
     if sex == 'Female': sex_v[0] = 1
     elif sex == 'Male': sex_v[1] = 1
@@ -133,52 +139,42 @@ def build_meta_vector(age, sex, loc):
     return np.array(sex_v + loc_v + [age / 100.0]).reshape(1, -1)
 
 # --- 7. MAIN INTERFACE ---
-col_logo, col_title = st.columns([1, 5])
-with col_title:
-    st.title("DermaVision AI")
-    st.markdown("**Professional Dermatoscopic Analysis System**")
+col_main, col_guide = st.columns([3, 1])
+with col_main:
+    st.title("DermaVision Pro")
+    st.markdown("**AI-Assisted Dermatoscopy Analysis System**")
 
-# Beginners Guide (Collapsible)
-with st.expander("📖 New User Guide: How to use this tool", expanded=True):
-    st.markdown("""
-    1. **Enter Patient Data:** Use the sidebar on the left to set Age, Sex, and Location.
-    2. **Upload Image:** Take a clear, close-up photo of the skin lesion and upload it below.
-    3. **Analyze:** Click the 'Analyze Lesion' button.
-    4. **Review:** Check the diagnosis and confidence score.
-    """)
-
-# Main Layout
-col1, col2 = st.columns([1, 1], gap="large")
+# Layout: Left (Image) | Right (Diagnostics)
+col1, col2 = st.columns([1, 1.2], gap="large")
 
 with col1:
-    st.subheader("1. Image Acquisition")
-    uploaded_file = st.file_uploader("Upload Image (JPG/PNG)", type=["jpg", "png", "jpeg"])
+    st.markdown("### 1. Specimen Acquisition")
+    st.info("Ensure image is clear, focused, and free of hair/bubbles.")
+    uploaded_file = st.file_uploader("Upload Image", type=["jpg", "png", "jpeg"], label_visibility="collapsed")
     
     if uploaded_file:
         image = Image.open(uploaded_file)
         st.image(image, caption="Clinical Specimen", use_column_width=True)
         
-        # Quality Warning
         if image.size[0] < 224:
-            st.warning("⚠️ Image resolution is low. Results may be less accurate.")
+            st.warning("⚠️ Low Resolution Warning")
 
 with col2:
-    st.subheader("2. Diagnostic Engine")
+    st.markdown("### 2. Diagnostic Engine")
     
     if uploaded_file:
-        if st.button("🔍 Analyze Lesion Now"):
-            with st.spinner("Analyzing cell patterns & metadata..."):
+        if st.button("RUN DIAGNOSTIC ANALYSIS"):
+            with st.spinner("Analyzing cellular patterns..."):
                 # Preprocessing
                 img_resized = image.resize((224, 224))
                 img_array = preprocess_input(np.array(img_resized))
                 img_batch = np.expand_dims(img_array, axis=0)
                 meta_batch = build_meta_vector(age, sex, loc)
                 
-                # Prediction
                 try:
                     preds = model.predict({'image_input': img_batch, 'meta_input': meta_batch})
                 except Exception as e:
-                    st.error(f"Prediction Error: {e}")
+                    st.error(f"Shape Error: {e}")
                     st.stop()
                 
                 # Results
@@ -188,39 +184,64 @@ with col2:
                 conf = np.max(preds)
                 
                 # Color Logic
-                color_code = "#e74c3c" if "Cancer" in status else "#27ae60"
+                if "Cancer" in status:
+                    border_color = "#e74c3c" # Red
+                    bg_color = "#fdf2f2" # Light Red BG
+                    icon = "🚨"
+                else:
+                    border_color = "#27ae60" # Green
+                    bg_color = "#f0fdf4" # Light Green BG
+                    icon = "✅"
                 
                 # BEAUTIFUL RESULT CARD
                 st.markdown(f"""
-                <div class="diagnosis-card" style="border-left: 8px solid {color_code};">
-                    <h3 style="margin:0; color:#64748b;">Primary Diagnosis</h3>
-                    <h1 style="margin:10px 0; color:#1e293b;">{full_name}</h1>
-                    <p style="font-size:20px; font-weight:bold; color:{color_code};">{status}</p>
-                    <hr>
-                    <p style="color:#64748b; margin-bottom:0;">AI Confidence Score</p>
-                    <h2 style="color:#3b82f6; margin:0;">{conf*100:.2f}%</h2>
+                <div class="diagnosis-card" style="border-top: 6px solid {border_color}; background-color: {bg_color};">
+                    <h4 style="margin:0; color:#555;">AI Prediction</h4>
+                    <h1 style="margin:10px 0; color:#1e293b;">{icon} {full_name}</h1>
+                    <div style="display:flex; justify-content:center; gap:20px; margin-top:15px;">
+                        <span style="background:white; padding:5px 15px; border-radius:15px; border:1px solid {border_color}; color:{border_color}; font-weight:bold;">
+                            {status}
+                        </span>
+                        <span style="background:white; padding:5px 15px; border-radius:15px; border:1px solid #3498db; color:#3498db; font-weight:bold;">
+                            {conf*100:.1f}% Confidence
+                        </span>
+                    </div>
                 </div>
                 """, unsafe_allow_html=True)
                 
                 # Detailed Chart
                 st.write("")
-                st.markdown("#### Probability Breakdown")
-                chart_data = pd.DataFrame({
+                st.markdown("#### Differential Probabilities")
+                
+                # Create a nice clean table instead of a bar chart (Easier for doctors to read)
+                res_df = pd.DataFrame({
                     "Condition": [class_details[c][0] for c in classes],
-                    "Probability": preds[0]
-                })
-                st.bar_chart(chart_data.set_index("Condition"))
+                    "Risk Level": [class_details[c][1] for c in classes],
+                    "Probability": [f"{p*100:.2f}%" for p in preds[0]]
+                }).sort_values(by="Probability", ascending=False)
+                
+                st.dataframe(
+                    res_df.style.background_gradient(subset=["Probability"], cmap="Blues"),
+                    use_container_width=True,
+                    hide_index=True
+                )
 
     else:
         # Empty State
-        st.info("👈 Please upload an image on the left to activate the AI.")
+        st.info("👈 Waiting for image upload...")
+        st.markdown("""
+        **Supported Classifications:**
+        * **Melanoma** (High Risk)
+        * **Carcinoma** (Basal Cell)
+        * **Nevi** (Benign Moles)
+        * **Keratosis** (Benign/Pre-cancerous)
+        """)
 
-# Footer
+# --- Footer ---
 st.markdown("---")
 st.markdown("""
-<div style="text-align: center; color: #64748b; font-size: 12px;">
-    <strong>Medical Disclaimer:</strong> This tool is for educational purposes only. 
-    AI predictions should never replace professional medical advice. 
-    Always consult a dermatologist for diagnosis.
+<div style="text-align: center; font-size: 12px; color: #64748b;">
+    <strong>Medical Disclaimer:</strong> This system uses Artificial Intelligence to estimate risk. 
+    It is NOT a diagnostic device. All results must be verified by a certified dermatologist.
 </div>
 """, unsafe_allow_html=True)
