@@ -15,10 +15,41 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# --- 2. CSS STYLING (Simplified because config.toml handles the heavy lifting) ---
+# --- 2. ADVANCED CSS (Theme & Layout) ---
 st.markdown("""
 <style>
-    /* 1. INPUT BOXES - Force White Background & Dark Text */
+    /* 1. Main Background */
+    .stApp { background-color: #f4f6f9; }
+
+    /* 2. Global Text Color - Dark Grey/Blue */
+    h1, h2, h3, h4, h5, h6, p, li, label, .stMarkdown, .stText {
+        color: #1e293b !important;
+    }
+
+    /* 3. Expander Styling */
+    .streamlit-expanderHeader {
+        background-color: #475569 !important;
+        color: white !important;
+        border-radius: 8px;
+    }
+    .streamlit-expanderContent {
+        background-color: white !important;
+        color: #1e293b !important;
+        border: 1px solid #e2e8f0;
+    }
+    .streamlit-expanderHeader svg { fill: white !important; }
+
+    /* 4. Dropdown Menu Styling */
+    div[data-baseweb="popover"], div[data-baseweb="menu"] {
+        background-color: #262730 !important;
+    }
+    div[data-baseweb="option"] { color: white !important; }
+    div[data-baseweb="option"]:hover {
+        background-color: #3498db !important;
+        color: white !important;
+    }
+
+    /* 5. Input Box Styling */
     .stSelectbox div[data-baseweb="select"] > div,
     .stNumberInput div[data-baseweb="input"] > div,
     .stTextInput div[data-baseweb="input"] > div {
@@ -26,13 +57,13 @@ st.markdown("""
         color: #1e293b !important;
         border: 1px solid #cbd5e1;
     }
+    input { color: black !important; }
     
-    /* 2. DROPDOWN MENU TEXT - Force Black */
-    div[data-baseweb="popover"] li div {
-        color: #1e293b !important;
+    /* 6. Sidebar & Cards */
+    section[data-testid="stSidebar"] {
+        background-color: #ffffff;
+        border-right: 2px solid #e2e8f0;
     }
-    
-    /* 3. RESULT CARD */
     .diagnosis-card {
         background-color: white;
         padding: 30px;
@@ -42,7 +73,7 @@ st.markdown("""
         text-align: center;
     }
     
-    /* 4. BUTTONS */
+    /* 7. Button Styling */
     div.stButton > button {
         background: linear-gradient(135deg, #0284c7, #0369a1);
         color: white !important;
@@ -54,11 +85,13 @@ st.markdown("""
         width: 100%;
     }
     
-    /* 5. EXPANDERS */
-    .streamlit-expanderHeader {
-        background-color: white !important;
-        color: #1e293b !important;
-        border: 1px solid #e2e8f0;
+    /* 8. Footer Signature Styling */
+    .footer-signature {
+        font-family: 'Helvetica Neue', sans-serif;
+        color: #64748b;
+        font-size: 14px;
+        margin-top: 5px;
+        font-weight: 500;
     }
 </style>
 """, unsafe_allow_html=True)
@@ -96,15 +129,14 @@ with st.sidebar:
     st.title("Clinical Intake")
     st.markdown("---")
     
-    age = st.number_input("Patient Age", min_value=0, max_value=120, value=45)
+    age = st.number_input("Patient Age", min_value=0, max_value=120, value=45, help="Age is a key factor in skin cancer risk.")
     sex = st.selectbox("Biological Sex", ["Male", "Female", "Unknown"])
     
-    # RENAMED to Localization
     loc = st.selectbox("Localization", [
         "Back", "Lower Extremity", "Trunk", "Upper Extremity", "Abdomen", 
         "Face", "Chest", "Foot", "Neck", "Scalp", "Hand", "Ear", 
         "Genital", "Acral", "Unknown"
-    ])
+    ], help="Select the exact body part where the lesion is located.")
     
     st.markdown("---")
     st.caption("Session ID: " + str(hash(datetime.datetime.now()))[:8])
@@ -214,10 +246,16 @@ with col2:
     else:
         st.info("👈 Waiting for image upload...")
 
+# --- 8. FOOTER WITH SIGNATURE ---
 st.markdown("---")
 st.markdown("""
-<div style="text-align: center; color: #64748b; font-size: 12px;">
-    <strong>Medical Disclaimer:</strong> This tool is for educational purposes only. 
-    AI predictions should never replace professional medical advice.
+<div style="text-align: center;">
+    <p style="color: #64748b; font-size: 12px; margin-bottom: 5px;">
+        <strong>Medical Disclaimer:</strong> This tool is for educational purposes only. 
+        AI predictions should never replace professional medical advice.
+    </p>
+    <p class="footer-signature">
+        Designed & Developed by <strong>Muhammad Shahan</strong>
+    </p>
 </div>
 """, unsafe_allow_html=True)
