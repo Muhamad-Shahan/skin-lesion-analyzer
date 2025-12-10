@@ -10,7 +10,7 @@ Melanoma is the deadliest form of skin cancer, but survival rates exceed 95% if 
 
 **DermaVision** is a **Multimodal Deep Learning System** that mimics this clinical process. It fuses **Dermatoscopic Imaging (CNN)** with **Clinical Metadata** to classify skin lesions into 7 diagnostic categories. The system is deployed as a high-contrast, accessibility-focused web application for real-time analysis.
 
-> **[🔴 Launch Live Diagnostic Tool](https://skin-lesion-analyzer-macrkhfljjpy7ahxeqy7fv.streamlit.app/)**
+> **[🔴 Launch Live Diagnostic Tool](https://dermavision-multimodal-ai-gt2rbxrd5hfu7svv39ayzf.streamlit.app/)**
 
 ## 📊 Dataset & Research
 The model was trained on the **HAM10000 ("Human Against Machine with 10000 training images")** dataset, the gold standard for dermatoscopic research.
